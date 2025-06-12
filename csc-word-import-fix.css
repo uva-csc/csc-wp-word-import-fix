@@ -1,0 +1,5 @@
+.greyed-out {
+    opacity: 0.2;
+    pointer-events: none;
+    filter: grayscale(100%);
+}
