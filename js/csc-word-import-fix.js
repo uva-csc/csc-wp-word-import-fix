@@ -1,9 +1,6 @@
 
 const { select, subscribe, dispatch } = wp.data;
 
-console.log("csc word import fix jjj");
-
-
 function updateNoteBlocks(blocks) {
     blocks.forEach((block) => {
         // List items
@@ -34,7 +31,6 @@ const doIt = (e) => {
     iframe.addClass('greyed-out');
     const unsubscribe = subscribe(() => {
         const blocks = select('core/editor').getBlocks();
-        console.log("Editor blocks 2", blocks);
         if (blocks) {
             unsubscribe();
             if (blocks.length === 1 && blocks[0]?.name === 'core/freeform') {
