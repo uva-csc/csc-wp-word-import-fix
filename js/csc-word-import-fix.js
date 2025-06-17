@@ -55,6 +55,6 @@ setTimeout(() => {
     const settingsdiv = jQuery('.editor-header__settings');
     settingsdiv.prepend('<button type="button" aria-pressed="false" ' +
         'class="components-button is-compact has-icon" onclick="doIt()">' +
-        '<img src="/wp-content/plugins/simple-plugin-test/wrench.svg" title="Fix it" alt="Wrench icon" />' +
+        '<img src="/wp-content/plugins/csc-word-import-fix/wrench.svg" title="Fix it" alt="Wrench icon" />' +
         '</button>');
 }, 1000);
