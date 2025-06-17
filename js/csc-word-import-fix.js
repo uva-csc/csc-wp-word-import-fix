@@ -1,100 +1,64 @@
 
 const { select, subscribe, dispatch } = wp.data;
 
-console.log("csc word import fix hhh");
+console.log("csc word import fix jjj");
 
-const doIt = (e) => {
-    console.log("doing it 4 u!");
-    const iframe = jQuery('.block-editor-iframe__scale-container iframe');
-    console.log(iframe);
-    iframe.addClass('greyed-out');
-    let content;
-    const unsubscribe = subscribe(() => {
-        content = select('core/editor').getEditedPostAttribute('content');
-        //console.log("content in subscribe", content);
-        if (content) {
-            unsubscribe();
-            console.log('Updating content');
-            content = content.replace('<!-- wp:paragraph -->\n' +
-                '<p></p>\n' +
-                '<!-- /wp:paragraph -->', '');
-            content += '<!-- wp:paragraph --><p>Newly 2 added HTML content</p><!-- /wp:paragraph -->';
-            dispatch('core/editor').editPost({
-                content: content,
-            });
-            console.log("removing grey");
-            iframe.removeClass('greyed-out');
+
+function updateNoteBlocks(blocks) {
+    blocks.forEach((block) => {
+        // List items
+        if (block.name === 'core/list-item') {
+            const oldcontent = block.attributes.content.toString();
+            if (oldcontent) {
+                let newContent = oldcontent.replace(/<br>|<\/?p>/g, '').replace(/\s{2,}/, ' ');
+                const match = newContent.match(/href="#(post-\d+-endnote-ref-\d+)"/);
+                if(match) {
+                    newContent = '<span id="' + match[1].replace('-ref-', '-') + '">' + newContent + '</span>';
+                }
+                dispatch('core/editor').updateBlockAttributes(block.clientId, {
+                    content: newContent
+                });
+            }
+        }
+
+        // Recursively handle nested blocks
+        if (block.innerBlocks && block.innerBlocks.length > 0) {
+            updateNoteBlocks(block.innerBlocks);
         }
     });
 }
 
-const doItnew = () => {
-    console.log("doing it 4 u!");
+const doIt = (e) => {
     const iframe = jQuery('.block-editor-iframe__scale-container iframe');
+    //console.log(iframe);
     iframe.addClass('greyed-out');
-
-    const { select, dispatch, subscribe } = wp.data;
-
     const unsubscribe = subscribe(() => {
-        const isReady = select('core/editor').isSavingPost() === false &&
-            select('core/editor').isEditedPostDirty() !== undefined;
-
-        const content = select('core/editor').getEditedPostAttribute('content');
-
-        if (isReady && content !== null) {
-            console.log('Editor is ready, updating content');
+        const blocks = select('core/editor').getBlocks();
+        console.log("Editor blocks 2", blocks);
+        if (blocks) {
             unsubscribe();
-
-            let updatedContent = content.replace(
-                '<!-- wp:paragraph -->\n<p></p>\n<!-- /wp:paragraph -->',
-                ''
-            );
-            updatedContent += '<!-- wp:paragraph --><p>Added HTML content</p><!-- /wp:paragraph -->';
-
-            dispatch('core/editor').editPost({ content: updatedContent });
-
-            iframe.removeClass('greyed-out');
+            if (blocks.length === 1 && blocks[0]?.name === 'core/freeform') {
+                dispatch('core/notices').createNotice(
+                    'warning', // One of: 'info', 'success', 'warning', 'error'
+                    'The current post has not been converted to blocks. Please press "Convert to Blocks" in order to apply the custom Journal fixes',
+                    {
+                        isDismissible: true,
+                        type: 'default', // or 'default'
+                    }
+                );
+            } else {
+                updateNoteBlocks(blocks);
+            }
         }
+        iframe.removeClass('greyed-out');
     });
-};
-
+}
 
 setTimeout(() => {
-    const header = document.querySelector('.edit-post-header');
-    console.log("got the header again 3", header);
+    // Add fix it icon
     const settingsdiv = jQuery('.editor-header__settings');
-    console.log(settingsdiv);
     settingsdiv.prepend('<button type="button" aria-pressed="false" ' +
         'class="components-button is-compact has-icon" onclick="doIt()">' +
         '<img src="/wp-content/plugins/simple-plugin-test/wrench.svg" title="Fix it" alt="Wrench icon" />' +
         '</button>');
 }, 1000);
-
-/*
-
-const unsubscribe = subscribe(() => {
-    let content = select('core/editor').getEditedPostAttribute('content');
-    if (content) {
-        console.log('Post content loaded NEW~:', content);
-        unsubscribe(); // Only run once
-        setTimeout(() => {
-            const header = document.querySelector('.edit-post-header');
-            console.log("header", header);
-            const settingsdiv = jQuery('.editor-header__settings');
-            console.log(settingsdiv);
-            settingsdiv.prepend('<button type="button" aria-pressed="false" ' +
-                'class="components-button is-compact has-icon" onclick="doIt()">' +
-                '<img src="/wp-content/plugins/simple-plugin-test/wrench.svg" title="Fix it" alt="Wrench icon" />' +
-                '</button>')
-            /!*
-            if (header && !header.querySelector('.my-custom-fix-button')) {
-                const button = document.createElement('button');
-                button.className = 'components-button is-secondary my-custom-fix-button';
-                button.innerText = 'Fix';
-                button.style.marginLeft = '8px';
-                button.onclick = () => alert('Fix button clicked!');
-                header.appendChild(button);
-            }*!/
-        }, 1000);
-    }
-});*/
