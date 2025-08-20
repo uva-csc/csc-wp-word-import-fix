@@ -3,11 +3,13 @@ const { select, subscribe, dispatch } = wp.data;
 
 function updateNoteBlocks(blocks) {
     blocks.forEach((block) => {
-        // List items
+        // List items (especially notes at end of article)
         if (block.name === 'core/list-item') {
             const oldcontent = block.attributes.content.toString();
             if (oldcontent) {
+                // Remove extra line returns or <p> tags embedded in an <li>
                 let newContent = oldcontent.replace(/<br>|<\/?p>/g, '').replace(/\s{2,}/, ' ');
+                // If there is a return link to the reference in the text, then it's an endnote so wrap in ID
                 const match = newContent.match(/href="#(post-\d+-endnote-ref-\d+)"/);
                 if(match) {
                     newContent = '<span id="' + match[1].replace('-ref-', '-') + '">' + newContent + '</span>';
@@ -15,6 +17,19 @@ function updateNoteBlocks(blocks) {
                 dispatch('core/editor').updateBlockAttributes(block.clientId, {
                     content: newContent
                 });
+            }
+        }
+
+        // For Paragraphs replace any double <sup><sup>...</sup></sup> for endnote refrences in the texts with single
+        if (block.name === 'core/paragraph') {
+            const oldcontent = block.attributes.content.toString();
+            if (oldcontent) {
+                if (/<sup>\s*<sup>/.test(oldcontent)) {
+                    const newContent = oldcontent.replace(/<sup>\s*<sup>(.*?)<\/sup>\s*<\/sup>/g, "<sup>$1</sup>");
+                    dispatch('core/editor').updateBlockAttributes(block.clientId, {
+                        content: newContent
+                    });
+                }
             }
         }
 
