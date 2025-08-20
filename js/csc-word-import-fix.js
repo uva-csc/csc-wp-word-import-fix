@@ -22,6 +22,7 @@ function updateNoteBlocks(blocks) {
 
         // For Paragraphs replace any double <sup><sup>...</sup></sup> for endnote refrences in the texts with single
         if (block.name === 'core/paragraph') {
+            console.log("In a pragraph", block);
             const oldcontent = block.attributes.content.toString();
             if (oldcontent) {
                 if (/<sup>\s*<sup>/.test(oldcontent)) {
